@@ -1035,7 +1035,7 @@ async function downloadSignedPdf() {
   try {
     const pdfDoc = await PDFDocument.load(app.pdfBytes, {
       password: app.pdfPassword || undefined,
-      ignoreEncryption: false,
+      ignoreEncryption: true,
     });
 
     const pages = pdfDoc.getPages();
