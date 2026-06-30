@@ -1026,6 +1026,17 @@ function addSignatureToPage(dataUrl, width, height) {
 // Download signed PDF
 document.getElementById('btn-download').addEventListener('click', downloadSignedPdf);
 
+async function renderPageToCanvas(pageNum, dpi) {
+  const page = await app.pdfDoc.getPage(pageNum);
+  const viewport = page.getViewport({ scale: dpi / 72 });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return { canvas, viewport };
+}
+
 async function downloadSignedPdf() {
   if (app.signatures.length === 0) {
     showToast('No signatures added yet');
@@ -1033,10 +1044,40 @@ async function downloadSignedPdf() {
   }
   showLoading();
   try {
-    const pdfDoc = await PDFDocument.load(app.pdfBytes, {
-      password: app.pdfPassword || undefined,
-      ignoreEncryption: true,
-    });
+    let pdfDoc;
+    let isEncrypted = false;
+    const renderDpi = 200;
+
+    // Try loading directly first; fall back to re-rendering for encrypted PDFs
+    try {
+      pdfDoc = await PDFDocument.load(app.pdfBytes, {
+        password: app.pdfPassword || undefined,
+      });
+    } catch (encErr) {
+      isEncrypted = true;
+    }
+
+    if (isEncrypted) {
+      // Encrypted PDF: render each page as an image into a new PDF
+      pdfDoc = await PDFDocument.create();
+
+      for (let i = 1; i <= app.totalPages; i++) {
+        const { canvas: pageCanvas, viewport } = await renderPageToCanvas(i, renderDpi);
+        const pageImgBytes = await new Promise(resolve => {
+          pageCanvas.toBlob(blob => blob.arrayBuffer().then(buf => resolve(new Uint8Array(buf))), 'image/png');
+        });
+        const pageImg = await pdfDoc.embedPng(pageImgBytes);
+
+        const origPage = await app.pdfDoc.getPage(i);
+        const origViewport = origPage.getViewport({ scale: 1 });
+        const page = pdfDoc.addPage([origViewport.width, origViewport.height]);
+        page.drawImage(pageImg, {
+          x: 0, y: 0,
+          width: origViewport.width,
+          height: origViewport.height,
+        });
+      }
+    }
 
     const pages = pdfDoc.getPages();
 
