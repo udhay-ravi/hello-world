@@ -3,143 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PDF Signer Online</title>
+  <title>PDF Editor & Signer</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
     }
-
     header {
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-    }
-
-    header h1 { font-size: 1.5rem; font-weight: 600; }
-    header svg { width: 32px; height: 32px; }
-
-    .toolbar {
-      background: white;
-      padding: 0.75rem 2rem;
+      padding: 0.75rem 1.5rem;
       display: flex;
       align-items: center;
       gap: 0.75rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+    header h1 { font-size: 1.3rem; font-weight: 600; }
+    header svg { width: 28px; height: 28px; }
+
+    /* Toolbar */
+    .toolbar {
+      background: white;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
       flex-wrap: wrap;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
       border-bottom: 1px solid #e0e0e0;
     }
-
-    .toolbar button, .toolbar label {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.5rem 1rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: all 0.15s;
-      white-space: nowrap;
-    }
-
-    .toolbar button:hover, .toolbar label:hover {
-      background: #f5f5f5;
-      border-color: #aaa;
-    }
-
-    .toolbar button.primary {
-      background: #0f3460;
-      color: white;
-      border-color: #0f3460;
-    }
-
-    .toolbar button.primary:hover { background: #16213e; }
-
-    .toolbar button.success {
-      background: #27ae60;
-      color: white;
-      border-color: #27ae60;
-    }
-
-    .toolbar button.success:hover { background: #219a52; }
-
-    .toolbar button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .toolbar .separator {
-      width: 1px;
-      height: 28px;
-      background: #d0d0d0;
-    }
-
-    .toolbar .page-nav {
+    .toolbar-group {
       display: flex;
       align-items: center;
-      gap: 0.3rem;
-      font-size: 0.875rem;
+      gap: 0.35rem;
     }
-
-    .toolbar .page-nav input {
-      width: 3rem;
-      text-align: center;
-      padding: 0.3rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 4px;
+    .toolbar-group-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: #999;
+      letter-spacing: 0.5px;
+      margin-right: 0.15rem;
     }
+    .tb { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.7rem; border: 1px solid #d0d0d0; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; transition: all 0.15s; white-space: nowrap; }
+    .tb:hover { background: #f0f0f0; border-color: #aaa; }
+    .tb.active { background: #0f3460; color: white; border-color: #0f3460; }
+    .tb.primary { background: #0f3460; color: white; border-color: #0f3460; }
+    .tb.primary:hover { background: #16213e; }
+    .tb.success { background: #27ae60; color: white; border-color: #27ae60; }
+    .tb.success:hover { background: #219a52; }
+    .tb:disabled { opacity: 0.5; cursor: not-allowed; }
+    .sep { width: 1px; height: 26px; background: #d0d0d0; margin: 0 0.15rem; }
 
-    #upload-area {
-      display: flex;
-      flex-direction: column;
+    .tb svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .page-nav { display: flex; align-items: center; gap: 0.2rem; font-size: 0.8rem; }
+    .page-nav input { width: 2.5rem; text-align: center; padding: 0.25rem; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 0.8rem; }
+
+    /* Sub-toolbar for tool options */
+    .sub-toolbar {
+      background: #fafafa;
+      padding: 0.4rem 1rem;
+      display: none;
       align-items: center;
-      justify-content: center;
-      min-height: calc(100vh - 120px);
-      padding: 2rem;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #e8e8e8;
+      font-size: 0.8rem;
     }
+    .sub-toolbar.visible { display: flex; }
+    .sub-toolbar label { display: flex; align-items: center; gap: 0.3rem; color: #555; }
+    .sub-toolbar input[type="color"] { width: 28px; height: 24px; border: 1px solid #ccc; border-radius: 4px; padding: 1px; cursor: pointer; }
+    .sub-toolbar input[type="range"] { width: 80px; }
+    .sub-toolbar input[type="number"] { width: 3.5rem; padding: 0.2rem 0.3rem; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+    .sub-toolbar select { padding: 0.2rem 0.4rem; border: 1px solid #ccc; border-radius: 4px; }
 
-    .drop-zone {
-      border: 3px dashed #c0c0c0;
-      border-radius: 16px;
-      padding: 4rem 3rem;
-      text-align: center;
-      max-width: 500px;
-      width: 100%;
-      background: white;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    .drop-zone:hover, .drop-zone.drag-over {
-      border-color: #0f3460;
-      background: #f8f9ff;
-    }
-
+    /* Upload */
+    #upload-area { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); padding: 2rem; }
+    .drop-zone { border: 3px dashed #c0c0c0; border-radius: 16px; padding: 4rem 3rem; text-align: center; max-width: 500px; width: 100%; background: white; transition: all 0.2s; cursor: pointer; }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: #0f3460; background: #f8f9ff; }
     .drop-zone svg { width: 64px; height: 64px; margin-bottom: 1rem; color: #999; }
     .drop-zone h2 { font-size: 1.25rem; margin-bottom: 0.5rem; }
     .drop-zone p { color: #666; font-size: 0.9rem; }
-
-    .drop-zone .browse-btn {
-      display: inline-block;
-      margin-top: 1rem;
-      padding: 0.6rem 1.5rem;
-      background: #0f3460;
-      color: white;
-      border-radius: 8px;
-      font-weight: 500;
-    }
+    .drop-zone .browse-btn { display: inline-block; margin-top: 1rem; padding: 0.6rem 1.5rem; background: #0f3460; color: white; border-radius: 8px; font-weight: 500; }
 
     #editor-area { display: none; }
 
@@ -148,260 +98,98 @@
       justify-content: center;
       padding: 1.5rem;
       overflow: auto;
-      min-height: calc(100vh - 170px);
+      min-height: calc(100vh - 150px);
       background: #e8e8e8;
     }
-
-    .page-wrapper {
-      position: relative;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      background: white;
-      display: inline-block;
-    }
-
+    .page-wrapper { position: relative; box-shadow: 0 4px 20px rgba(0,0,0,0.15); background: white; display: inline-block; }
     .page-wrapper canvas { display: block; }
 
-    .signature-box {
+    /* Annotation overlay canvas for freehand drawing */
+    #annotation-canvas {
       position: absolute;
-      border: 2px solid #0f3460;
-      cursor: move;
-      background: rgba(255,255,255,0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 60px;
-      min-height: 30px;
-      z-index: 10;
-    }
-
-    .signature-box.selected { border-color: #e94560; box-shadow: 0 0 0 2px rgba(233,69,96,0.3); }
-
-    .signature-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
+      top: 0;
+      left: 0;
+      z-index: 5;
       pointer-events: none;
-      user-select: none;
     }
+    #annotation-canvas.drawing { pointer-events: auto; cursor: crosshair; }
 
-    .signature-box .resize-handle {
+    /* Draggable elements (signatures, text boxes, shapes, images) */
+    .anno-box {
       position: absolute;
-      width: 14px;
-      height: 14px;
-      background: #0f3460;
-      border: 2px solid white;
-      border-radius: 50%;
-      cursor: nwse-resize;
-      bottom: -7px;
-      right: -7px;
-      z-index: 11;
+      cursor: move;
+      z-index: 10;
+      border: 2px solid transparent;
+    }
+    .anno-box:hover { border-color: #0f3460; }
+    .anno-box.selected { border-color: #e94560; box-shadow: 0 0 0 2px rgba(233,69,96,0.25); }
+    .anno-box img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }
+    .anno-box .resize-handle { position: absolute; width: 12px; height: 12px; background: #0f3460; border: 2px solid white; border-radius: 50%; cursor: nwse-resize; bottom: -6px; right: -6px; z-index: 11; }
+    .anno-box.selected .resize-handle { background: #e94560; }
+    .anno-box .delete-btn { position: absolute; top: -10px; right: -10px; width: 20px; height: 20px; background: #e94560; color: white; border: 2px solid white; border-radius: 50%; font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 12; opacity: 0; transition: opacity 0.15s; }
+    .anno-box:hover .delete-btn, .anno-box.selected .delete-btn { opacity: 1; }
+
+    /* Text annotation content */
+    .anno-text-content {
+      min-width: 40px;
+      min-height: 20px;
+      padding: 4px 6px;
+      outline: none;
+      word-break: break-word;
+      white-space: pre-wrap;
+      background: transparent;
     }
 
-    .signature-box.selected .resize-handle { background: #e94560; }
+    /* Shape annotations */
+    .anno-shape { display: flex; align-items: center; justify-content: center; }
+    .anno-shape svg { width: 100%; height: 100%; }
 
-    .signature-box .delete-btn {
-      position: absolute;
-      top: -10px;
-      right: -10px;
-      width: 22px;
-      height: 22px;
-      background: #e94560;
-      color: white;
-      border: 2px solid white;
-      border-radius: 50%;
-      font-size: 12px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 12;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
+    /* Highlight box */
+    .anno-highlight { background: rgba(255,235,59,0.4); border: none !important; min-width: 50px; min-height: 20px; }
+    .anno-highlight:hover { border: 2px solid #f9a825 !important; }
+    .anno-highlight.selected { border: 2px solid #f57f17 !important; }
 
-    .signature-box:hover .delete-btn,
-    .signature-box.selected .delete-btn { opacity: 1; }
+    /* Whiteout */
+    .anno-whiteout { background: white; border: none !important; min-width: 30px; min-height: 15px; }
+    .anno-whiteout:hover { border: 2px dashed #ccc !important; }
+    .anno-whiteout.selected { border: 2px dashed #999 !important; }
 
-    /* Password modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal {
-      background: white;
-      border-radius: 12px;
-      padding: 2rem;
-      max-width: 400px;
-      width: 90%;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-
+    /* Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: white; border-radius: 12px; padding: 2rem; max-width: 420px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
     .modal h3 { margin-bottom: 0.5rem; }
     .modal p { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
-
-    .modal input[type="password"] {
-      width: 100%;
-      padding: 0.6rem 0.8rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 1rem;
-      margin-bottom: 1rem;
-    }
-
-    .modal .modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: flex-end;
-    }
-
-    .modal button {
-      padding: 0.5rem 1.2rem;
-      border-radius: 6px;
-      border: 1px solid #d0d0d0;
-      background: white;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
+    .modal input[type="password"] { width: 100%; padding: 0.6rem 0.8rem; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 1rem; margin-bottom: 1rem; }
+    .modal .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+    .modal button { padding: 0.5rem 1.2rem; border-radius: 6px; border: 1px solid #d0d0d0; background: white; cursor: pointer; font-size: 0.9rem; }
     .modal button.primary { background: #0f3460; color: white; border-color: #0f3460; }
-
     .modal .error-msg { color: #e94560; font-size: 0.85rem; margin-bottom: 0.5rem; display: none; }
 
-    /* Signature pad modal */
-    .sig-pad-container canvas {
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      cursor: crosshair;
-      width: 100%;
-      touch-action: none;
-    }
+    /* Signature pad */
+    .sig-pad-container canvas { border: 1px solid #d0d0d0; border-radius: 6px; cursor: crosshair; width: 100%; touch-action: none; }
+    .sig-pad-container .sig-options { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .sig-pad-container .sig-options button { padding: 0.4rem 0.8rem; border: 1px solid #d0d0d0; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; }
+    .sig-pad-container .sig-options button.active { background: #0f3460; color: white; border-color: #0f3460; }
+    .color-btn { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #d0d0d0; cursor: pointer; padding: 0; }
+    .color-btn.active { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.3); }
+    .sig-type-input { width: 100%; padding: 0.6rem; border: 1px solid #d0d0d0; border-radius: 6px; font-size: 1.2rem; margin-bottom: 0.75rem; }
+    .sig-type-preview { height: 80px; border: 1px solid #d0d0d0; border-radius: 6px; display: flex; align-items: center; justify-content: center; margin-bottom: 0.75rem; background: white; }
+    .sig-font-options { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .sig-font-options button { padding: 0.3rem 0.8rem; border: 1px solid #d0d0d0; border-radius: 6px; background: white; cursor: pointer; font-size: 0.8rem; }
+    .sig-font-options button.active { background: #0f3460; color: white; border-color: #0f3460; }
 
-    .sig-pad-container .sig-options {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .sig-pad-container .sig-options button {
-      padding: 0.4rem 0.8rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .sig-pad-container .sig-options button.active {
-      background: #0f3460;
-      color: white;
-      border-color: #0f3460;
-    }
-
-    .sig-pad-container .color-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      border: 2px solid #d0d0d0;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    .sig-pad-container .color-btn.active { border-color: #0f3460; box-shadow: 0 0 0 2px rgba(15,52,96,0.3); }
-
-    .sig-type-input {
-      width: 100%;
-      padding: 0.6rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .sig-type-preview {
-      height: 80px;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 0.75rem;
-      background: white;
-    }
-
-    .sig-font-options {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .sig-font-options button {
-      padding: 0.3rem 0.8rem;
-      border: 1px solid #d0d0d0;
-      border-radius: 6px;
-      background: white;
-      cursor: pointer;
-      font-size: 0.8rem;
-    }
-
-    .sig-font-options button.active {
-      background: #0f3460;
-      color: white;
-      border-color: #0f3460;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1a1a2e;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      z-index: 2000;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-
+    .toast { position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%); background: #1a1a2e; color: white; padding: 0.75rem 1.5rem; border-radius: 8px; font-size: 0.9rem; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
     .toast.show { opacity: 1; }
-
-    .loading-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(255,255,255,0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-    }
-
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 4px solid #e0e0e0;
-      border-top-color: #0f3460;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-    }
-
+    .loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 999; }
+    .spinner { width: 48px; height: 48px; border: 4px solid #e0e0e0; border-top-color: #0f3460; border-radius: 50%; animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    @media (max-width: 600px) {
-      header { padding: 0.75rem 1rem; }
-      header h1 { font-size: 1.1rem; }
-      .toolbar { padding: 0.5rem 0.75rem; gap: 0.4rem; }
-      .toolbar button, .toolbar label { padding: 0.4rem 0.6rem; font-size: 0.8rem; }
+    @media (max-width: 640px) {
+      header { padding: 0.5rem 0.75rem; }
+      header h1 { font-size: 1rem; }
+      .toolbar { padding: 0.4rem 0.5rem; gap: 0.3rem; }
+      .tb { padding: 0.3rem 0.5rem; font-size: 0.75rem; }
+      .tb .btn-label { display: none; }
       .drop-zone { padding: 2rem 1.5rem; }
     }
   </style>
@@ -409,66 +197,132 @@
 <body>
 
 <header>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-    <polyline points="14 2 14 8 20 8"></polyline>
-    <path d="M12 18v-6"></path>
-    <path d="M9 15l3 3 3-3"></path>
-  </svg>
-  <h1>PDF Signer Online</h1>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+  <h1>PDF Editor & Signer</h1>
 </header>
 
-<!-- Upload Area -->
 <div id="upload-area">
   <div class="drop-zone" id="drop-zone">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-      <polyline points="14 2 14 8 20 8"></polyline>
-    </svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
     <h2>Upload your PDF</h2>
     <p>Drag & drop your PDF here, or click to browse</p>
-    <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #999;">Password-protected PDFs are supported</p>
+    <p style="margin-top:0.5rem;font-size:0.8rem;color:#999">Password-protected PDFs supported</p>
     <div class="browse-btn">Browse Files</div>
     <input type="file" id="file-input" accept=".pdf" hidden>
   </div>
 </div>
 
-<!-- Editor Area -->
 <div id="editor-area">
-  <div class="toolbar" id="toolbar">
-    <button id="btn-add-signature" class="primary" title="Add Signature">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-      Add Signature
-    </button>
-    <button id="btn-add-image" title="Add Image Signature">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-      Upload Image
-    </button>
-    <input type="file" id="image-input" accept="image/*" hidden>
-    <div class="separator"></div>
-    <div class="page-nav">
-      <button id="btn-prev-page" title="Previous Page">&#9664;</button>
-      <span>Page <input type="number" id="page-input" value="1" min="1"> of <span id="page-count">1</span></span>
-      <button id="btn-next-page" title="Next Page">&#9654;</button>
+  <div class="toolbar">
+    <!-- Sign tools -->
+    <div class="toolbar-group">
+      <span class="toolbar-group-label">Sign</span>
+      <button class="tb" id="btn-sign" title="Draw / Type Signature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span class="btn-label">Signature</span>
+      </button>
+      <button class="tb" id="btn-stamp" title="Upload Image / Stamp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span class="btn-label">Image</span>
+      </button>
+      <input type="file" id="image-input" accept="image/*" hidden>
     </div>
-    <div class="separator"></div>
-    <button id="btn-zoom-out" title="Zoom Out">&#8722;</button>
-    <span id="zoom-level">100%</span>
-    <button id="btn-zoom-in" title="Zoom In">&#43;</button>
-    <div class="separator"></div>
-    <button id="btn-delete-selected" title="Delete Selected Signature" disabled>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-      Delete
+    <div class="sep"></div>
+
+    <!-- Edit tools -->
+    <div class="toolbar-group">
+      <span class="toolbar-group-label">Edit</span>
+      <button class="tb" id="btn-text" title="Add Text">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><line x1="12" y1="4" x2="12" y2="20"/><line x1="8" y1="20" x2="16" y2="20"/></svg>
+        <span class="btn-label">Text</span>
+      </button>
+      <button class="tb" id="btn-draw" title="Freehand Draw">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17c1-2 4-6 7-6s4 4 7 4 4-4 4-4"/></svg>
+        <span class="btn-label">Draw</span>
+      </button>
+      <button class="tb" id="btn-highlight" title="Highlight Area">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="8" rx="1" fill="rgba(255,235,59,0.5)"/></svg>
+        <span class="btn-label">Highlight</span>
+      </button>
+      <button class="tb" id="btn-whiteout" title="Whiteout / Redact Area">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="18" height="12" rx="1" fill="white" stroke="#999"/><line x1="7" y1="10" x2="17" y2="10" stroke="#ddd"/><line x1="7" y1="14" x2="14" y2="14" stroke="#ddd"/></svg>
+        <span class="btn-label">Whiteout</span>
+      </button>
+      <button class="tb" id="btn-shape" title="Add Shape">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        <span class="btn-label">Shape</span>
+      </button>
+    </div>
+    <div class="sep"></div>
+
+    <!-- Navigation -->
+    <div class="toolbar-group page-nav">
+      <button class="tb" id="btn-prev">&#9664;</button>
+      <span>Pg <input type="number" id="page-input" value="1" min="1"> / <span id="page-count">1</span></span>
+      <button class="tb" id="btn-next">&#9654;</button>
+    </div>
+    <div class="sep"></div>
+
+    <div class="toolbar-group">
+      <button class="tb" id="btn-zout">&#8722;</button>
+      <span id="zoom-level" style="font-size:0.8rem;min-width:2.5rem;text-align:center">100%</span>
+      <button class="tb" id="btn-zin">&#43;</button>
+    </div>
+    <div class="sep"></div>
+
+    <button class="tb" id="btn-undo" title="Undo last annotation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h13a4 4 0 010 8H7"/><polyline points="7 6 3 10 7 14"/></svg>
+    </button>
+    <button class="tb" id="btn-delete" title="Delete selected" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
     </button>
     <div style="flex:1"></div>
-    <button id="btn-download" class="success" title="Download Signed PDF">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download PDF
+    <button class="tb success" id="btn-download" title="Download edited PDF">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span class="btn-label">Download</span>
     </button>
   </div>
+
+  <!-- Sub-toolbar: context options for active tool -->
+  <div class="sub-toolbar" id="sub-toolbar">
+    <!-- Text options -->
+    <div id="opt-text" style="display:none">
+      <label>Size <input type="number" id="opt-text-size" value="16" min="8" max="120" step="1"></label>
+      <label>Color <input type="color" id="opt-text-color" value="#000000"></label>
+      <label>Font <select id="opt-text-font">
+        <option value="Helvetica">Helvetica</option>
+        <option value="Times New Roman">Times</option>
+        <option value="Courier New">Courier</option>
+        <option value="Georgia">Georgia</option>
+        <option value="Arial">Arial</option>
+      </select></label>
+      <label><input type="checkbox" id="opt-text-bold"> Bold</label>
+    </div>
+    <!-- Draw options -->
+    <div id="opt-draw" style="display:none">
+      <label>Color <input type="color" id="opt-draw-color" value="#e94560"></label>
+      <label>Width <input type="range" id="opt-draw-width" min="1" max="20" value="3"><span id="opt-draw-width-val">3</span>px</label>
+      <button class="tb" id="opt-draw-eraser">Eraser</button>
+    </div>
+    <!-- Highlight options -->
+    <div id="opt-highlight" style="display:none">
+      <label>Color <input type="color" id="opt-hl-color" value="#ffeb3b"></label>
+      <label>Opacity <input type="range" id="opt-hl-opacity" min="10" max="80" value="40"><span id="opt-hl-opacity-val">40</span>%</label>
+    </div>
+    <!-- Shape options -->
+    <div id="opt-shape" style="display:none">
+      <label>Shape <select id="opt-shape-type"><option value="rect">Rectangle</option><option value="circle">Ellipse</option><option value="line">Line</option><option value="arrow">Arrow</option></select></label>
+      <label>Stroke <input type="color" id="opt-shape-stroke" value="#e94560"></label>
+      <label>Width <input type="range" id="opt-shape-sw" min="1" max="10" value="2"><span id="opt-shape-sw-val">2</span>px</label>
+      <label>Fill <input type="color" id="opt-shape-fill" value="#ffffff"></label>
+      <label><input type="checkbox" id="opt-shape-nofill" checked> No fill</label>
+    </div>
+  </div>
+
   <div class="canvas-container" id="canvas-container">
     <div class="page-wrapper" id="page-wrapper">
       <canvas id="pdf-canvas"></canvas>
+      <canvas id="annotation-canvas"></canvas>
     </div>
   </div>
 </div>
@@ -477,671 +331,529 @@
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
 
-const { PDFDocument, rgb, degrees } = PDFLib;
-
+// ─── State ───
 const app = {
-  pdfBytes: null,
-  pdfDoc: null,
-  currentPage: 1,
-  totalPages: 0,
-  scale: 1.5,
-  signatures: [],
-  selectedSignature: null,
-  dragState: null,
-  resizeState: null,
-  pdfPassword: null,
+  pdfBytes: null, pdfDoc: null, currentPage: 1, totalPages: 0, scale: 1.5,
+  annotations: [],    // { id, page, type, ... }
+  selected: null,     // selected annotation
+  dragState: null, resizeState: null,
+  activeTool: null,   // 'text','draw','highlight','whiteout','shape',null
+  pdfPassword: null, fileName: '',
+  drawPaths: {},      // page -> [{points, color, width, eraser}]
+  currentDrawPath: null,
 };
 
-// DOM refs
-const uploadArea = document.getElementById('upload-area');
-const editorArea = document.getElementById('editor-area');
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const imageInput = document.getElementById('image-input');
-const pdfCanvas = document.getElementById('pdf-canvas');
-const pageWrapper = document.getElementById('page-wrapper');
-const canvasContainer = document.getElementById('canvas-container');
-const pageInput = document.getElementById('page-input');
-const pageCount = document.getElementById('page-count');
-const zoomLevel = document.getElementById('zoom-level');
+const $ = id => document.getElementById(id);
+const pdfCanvas = $('pdf-canvas');
+const annoCanvas = $('annotation-canvas');
+const annoCtx = annoCanvas.getContext('2d');
+const pageWrapper = $('page-wrapper');
 
-// Toast
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
-}
+// ─── Toast / Loading ───
+function showToast(msg, d=2500) { const t=$('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),d); }
+function showLoading() { const el=document.createElement('div'); el.className='loading-overlay'; el.id='loading'; el.innerHTML='<div class="spinner"></div>'; document.body.appendChild(el); }
+function hideLoading() { const el=$('loading'); if(el) el.remove(); }
 
-// Loading overlay
-function showLoading() {
-  const el = document.createElement('div');
-  el.className = 'loading-overlay';
-  el.id = 'loading';
-  el.innerHTML = '<div class="spinner"></div>';
-  document.body.appendChild(el);
-}
-function hideLoading() {
-  const el = document.getElementById('loading');
-  if (el) el.remove();
-}
-
-// File upload
+// ─── File Upload ───
+const dropZone = $('drop-zone');
+const fileInput = $('file-input');
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => { if(e.target.files[0]) handleFile(e.target.files[0]); });
 
 async function handleFile(file) {
-  if (file.type !== 'application/pdf') {
-    showToast('Please upload a PDF file');
-    return;
-  }
+  if(file.type !== 'application/pdf') { showToast('Please upload a PDF file'); return; }
   showLoading();
-  const bytes = await file.arrayBuffer();
-  app.pdfBytes = new Uint8Array(bytes);
+  app.pdfBytes = new Uint8Array(await file.arrayBuffer());
   app.fileName = file.name;
-  try {
-    await loadPdf();
-  } catch (err) {
+  try { await loadPdf(); }
+  catch(err) {
     hideLoading();
-    if (err.name === 'PasswordException' || (err.message && err.message.includes('password'))) {
-      promptPassword();
-    } else {
-      showToast('Failed to load PDF: ' + err.message);
-    }
+    if(err.name==='PasswordException' || (err.message && err.message.includes('password'))) promptPassword();
+    else showToast('Failed to load PDF: '+err.message);
   }
 }
 
 function promptPassword() {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'password-modal';
-  overlay.innerHTML = `
-    <div class="modal">
-      <h3>Password Protected PDF</h3>
-      <p>This PDF is password-protected. Please enter the password to unlock it.</p>
-      <div class="error-msg" id="pw-error">Incorrect password. Please try again.</div>
-      <input type="password" id="pw-input" placeholder="Enter password" autofocus>
-      <div class="modal-actions">
-        <button onclick="closePasswordModal()">Cancel</button>
-        <button class="primary" onclick="submitPassword()">Unlock</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  const input = document.getElementById('pw-input');
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
-  input.focus();
+  const ov = document.createElement('div'); ov.className='modal-overlay'; ov.id='pw-modal';
+  ov.innerHTML=`<div class="modal"><h3>Password Protected PDF</h3><p>Enter the password to unlock.</p><div class="error-msg" id="pw-error">Incorrect password.</div><input type="password" id="pw-input" placeholder="Password" autofocus><div class="modal-actions"><button onclick="$('pw-modal').remove()">Cancel</button><button class="primary" onclick="submitPw()">Unlock</button></div></div>`;
+  document.body.appendChild(ov);
+  $('pw-input').addEventListener('keydown', e => { if(e.key==='Enter') submitPw(); });
+  $('pw-input').focus();
 }
-
-window.closePasswordModal = function() {
-  const m = document.getElementById('password-modal');
-  if (m) m.remove();
-};
-
-window.submitPassword = async function() {
-  const pw = document.getElementById('pw-input').value;
-  if (!pw) return;
-  showLoading();
-  app.pdfPassword = pw;
-  try {
-    await loadPdf(pw);
-    closePasswordModal();
-  } catch (err) {
-    hideLoading();
-    if (err.name === 'PasswordException' || (err.message && err.message.includes('password'))) {
-      document.getElementById('pw-error').style.display = 'block';
-      document.getElementById('pw-input').value = '';
-      document.getElementById('pw-input').focus();
-    } else {
-      showToast('Failed to load PDF: ' + err.message);
-    }
-  }
+window.submitPw = async function() {
+  const pw = $('pw-input').value; if(!pw) return;
+  showLoading(); app.pdfPassword = pw;
+  try { await loadPdf(pw); $('pw-modal').remove(); }
+  catch(err) { hideLoading(); if(err.name==='PasswordException'||err.message?.includes('password')) { $('pw-error').style.display='block'; $('pw-input').value=''; $('pw-input').focus(); } else showToast('Error: '+err.message); }
 };
 
 async function loadPdf(password) {
-  const loadingTask = pdfjsLib.getDocument({ data: app.pdfBytes.slice(), password });
-  app.pdfDoc = await loadingTask.promise;
+  app.pdfDoc = await pdfjsLib.getDocument({ data: app.pdfBytes.slice(), password }).promise;
   app.totalPages = app.pdfDoc.numPages;
   app.currentPage = 1;
-  app.signatures = [];
-  app.selectedSignature = null;
-  pageCount.textContent = app.totalPages;
-  pageInput.max = app.totalPages;
-  pageInput.value = 1;
-  uploadArea.style.display = 'none';
-  editorArea.style.display = 'block';
+  app.annotations = []; app.selected = null; app.drawPaths = {};
+  $('page-count').textContent = app.totalPages;
+  $('page-input').max = app.totalPages; $('page-input').value = 1;
+  $('upload-area').style.display = 'none';
+  $('editor-area').style.display = 'block';
+  setActiveTool(null);
   await renderPage();
   hideLoading();
-  showToast('PDF loaded successfully');
+  showToast('PDF loaded');
 }
 
+// ─── Render ───
 async function renderPage() {
   const page = await app.pdfDoc.getPage(app.currentPage);
-  const viewport = page.getViewport({ scale: app.scale });
-  pdfCanvas.width = viewport.width;
-  pdfCanvas.height = viewport.height;
-  pageWrapper.style.width = viewport.width + 'px';
-  pageWrapper.style.height = viewport.height + 'px';
-
-  const ctx = pdfCanvas.getContext('2d');
-  await page.render({ canvasContext: ctx, viewport }).promise;
-
-  renderSignatureBoxes();
+  const vp = page.getViewport({ scale: app.scale });
+  pdfCanvas.width = vp.width; pdfCanvas.height = vp.height;
+  annoCanvas.width = vp.width; annoCanvas.height = vp.height;
+  pageWrapper.style.width = vp.width+'px'; pageWrapper.style.height = vp.height+'px';
+  await page.render({ canvasContext: pdfCanvas.getContext('2d'), viewport: vp }).promise;
+  redrawAnnotationCanvas();
+  renderAnnoBoxes();
 }
 
-function renderSignatureBoxes() {
-  pageWrapper.querySelectorAll('.signature-box').forEach(el => el.remove());
+function redrawAnnotationCanvas() {
+  annoCtx.clearRect(0, 0, annoCanvas.width, annoCanvas.height);
+  const paths = app.drawPaths[app.currentPage] || [];
+  for (const p of paths) {
+    if (p.points.length < 2) continue;
+    annoCtx.beginPath();
+    annoCtx.moveTo(p.points[0].x, p.points[0].y);
+    for (let i=1; i<p.points.length; i++) annoCtx.lineTo(p.points[i].x, p.points[i].y);
+    if (p.eraser) {
+      annoCtx.globalCompositeOperation = 'destination-out';
+      annoCtx.strokeStyle = 'rgba(0,0,0,1)';
+      annoCtx.lineWidth = p.width * 3;
+    } else {
+      annoCtx.globalCompositeOperation = 'source-over';
+      annoCtx.strokeStyle = p.color;
+      annoCtx.lineWidth = p.width;
+    }
+    annoCtx.lineCap = 'round'; annoCtx.lineJoin = 'round';
+    annoCtx.stroke();
+  }
+  annoCtx.globalCompositeOperation = 'source-over';
+}
 
-  app.signatures.filter(s => s.page === app.currentPage).forEach(sig => {
+function renderAnnoBoxes() {
+  pageWrapper.querySelectorAll('.anno-box').forEach(el => el.remove());
+  app.annotations.filter(a => a.page === app.currentPage).forEach(a => {
     const box = document.createElement('div');
-    box.className = 'signature-box' + (sig === app.selectedSignature ? ' selected' : '');
-    box.style.left = sig.x + 'px';
-    box.style.top = sig.y + 'px';
-    box.style.width = sig.width + 'px';
-    box.style.height = sig.height + 'px';
-    box.dataset.id = sig.id;
+    box.className = 'anno-box' + (a===app.selected?' selected':'');
+    box.style.left = a.x+'px'; box.style.top = a.y+'px';
+    box.style.width = a.width+'px'; box.style.height = a.height+'px';
+    box.dataset.id = a.id;
 
-    const img = document.createElement('img');
-    img.src = sig.dataUrl;
-    box.appendChild(img);
+    if (a.type === 'signature' || a.type === 'image') {
+      const img = document.createElement('img'); img.src = a.dataUrl;
+      box.style.background = 'rgba(255,255,255,0.85)';
+      box.appendChild(img);
+    } else if (a.type === 'text') {
+      const div = document.createElement('div');
+      div.className = 'anno-text-content';
+      div.contentEditable = true;
+      div.style.fontSize = a.fontSize+'px';
+      div.style.color = a.color;
+      div.style.fontFamily = a.fontFamily;
+      div.style.fontWeight = a.bold ? 'bold' : 'normal';
+      div.textContent = a.text;
+      div.addEventListener('input', () => { a.text = div.textContent; });
+      div.addEventListener('mousedown', e => e.stopPropagation());
+      div.addEventListener('dblclick', e => e.stopPropagation());
+      box.appendChild(div);
+    } else if (a.type === 'highlight') {
+      box.classList.add('anno-highlight');
+      box.style.background = a.color;
+    } else if (a.type === 'whiteout') {
+      box.classList.add('anno-whiteout');
+    } else if (a.type === 'shape') {
+      box.classList.add('anno-shape');
+      box.innerHTML = renderShapeSvg(a);
+    }
 
-    const resizeHandle = document.createElement('div');
-    resizeHandle.className = 'resize-handle';
-    box.appendChild(resizeHandle);
+    const rh = document.createElement('div'); rh.className='resize-handle'; box.appendChild(rh);
+    const db = document.createElement('div'); db.className='delete-btn'; db.textContent='×';
+    db.addEventListener('mousedown', e => { e.stopPropagation(); removeAnno(a.id); });
+    box.appendChild(db);
 
-    const deleteBtn = document.createElement('div');
-    deleteBtn.className = 'delete-btn';
-    deleteBtn.textContent = '×';
-    deleteBtn.addEventListener('mousedown', e => {
-      e.stopPropagation();
-      removeSignature(sig.id);
-    });
-    box.appendChild(deleteBtn);
-
-    // Drag
     box.addEventListener('mousedown', e => {
-      if (e.target === resizeHandle) return;
-      e.preventDefault();
-      selectSignature(sig.id);
-      const rect = box.getBoundingClientRect();
-      app.dragState = { sig, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+      if(e.target===rh || e.target.contentEditable==='true') return;
+      e.preventDefault(); selectAnno(a.id);
+      const r = box.getBoundingClientRect();
+      app.dragState = { anno: a, ox: e.clientX-r.left, oy: e.clientY-r.top };
+    });
+    rh.addEventListener('mousedown', e => {
+      e.preventDefault(); e.stopPropagation(); selectAnno(a.id);
+      app.resizeState = { anno: a, sx: e.clientX, sy: e.clientY, sw: a.width, sh: a.height };
     });
 
-    // Resize
-    resizeHandle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      selectSignature(sig.id);
-      app.resizeState = { sig, startX: e.clientX, startY: e.clientY, startW: sig.width, startH: sig.height };
-    });
-
-    // Touch support
+    // Touch
     box.addEventListener('touchstart', e => {
-      if (e.target === resizeHandle) return;
-      e.preventDefault();
-      selectSignature(sig.id);
-      const touch = e.touches[0];
-      const rect = box.getBoundingClientRect();
-      app.dragState = { sig, offsetX: touch.clientX - rect.left, offsetY: touch.clientY - rect.top };
-    }, { passive: false });
-
-    resizeHandle.addEventListener('touchstart', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      selectSignature(sig.id);
-      const touch = e.touches[0];
-      app.resizeState = { sig, startX: touch.clientX, startY: touch.clientY, startW: sig.width, startH: sig.height };
-    }, { passive: false });
+      if(e.target===rh || e.target.contentEditable==='true') return;
+      e.preventDefault(); selectAnno(a.id);
+      const t=e.touches[0], r=box.getBoundingClientRect();
+      app.dragState = { anno: a, ox: t.clientX-r.left, oy: t.clientY-r.top };
+    }, {passive:false});
+    rh.addEventListener('touchstart', e => {
+      e.preventDefault(); e.stopPropagation(); selectAnno(a.id);
+      const t=e.touches[0];
+      app.resizeState = { anno: a, sx: t.clientX, sy: t.clientY, sw: a.width, sh: a.height };
+    }, {passive:false});
 
     pageWrapper.appendChild(box);
   });
 }
 
-// Mouse/touch move & up
-document.addEventListener('mousemove', handlePointerMove);
-document.addEventListener('mouseup', handlePointerUp);
-document.addEventListener('touchmove', handlePointerMove, { passive: false });
-document.addEventListener('touchend', handlePointerUp);
-
-function getPointerPos(e) {
-  if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  return { x: e.clientX, y: e.clientY };
+function renderShapeSvg(a) {
+  const w=a.width, h=a.height, sw=a.strokeWidth||2, sc=a.strokeColor||'#e94560';
+  const fc = a.noFill ? 'none' : (a.fillColor||'#fff');
+  if (a.shape==='rect') return `<svg viewBox="0 0 ${w} ${h}"><rect x="${sw}" y="${sw}" width="${w-sw*2}" height="${h-sw*2}" stroke="${sc}" stroke-width="${sw}" fill="${fc}" rx="2"/></svg>`;
+  if (a.shape==='circle') return `<svg viewBox="0 0 ${w} ${h}"><ellipse cx="${w/2}" cy="${h/2}" rx="${w/2-sw}" ry="${h/2-sw}" stroke="${sc}" stroke-width="${sw}" fill="${fc}"/></svg>`;
+  if (a.shape==='line') return `<svg viewBox="0 0 ${w} ${h}"><line x1="${sw}" y1="${h-sw}" x2="${w-sw}" y2="${sw}" stroke="${sc}" stroke-width="${sw}"/></svg>`;
+  if (a.shape==='arrow') return `<svg viewBox="0 0 ${w} ${h}"><defs><marker id="ah${a.id}" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="${sc}"/></marker></defs><line x1="${sw}" y1="${h-sw}" x2="${w-sw}" y2="${sw}" stroke="${sc}" stroke-width="${sw}" marker-end="url(#ah${a.id})"/></svg>`;
+  return '';
 }
 
-function handlePointerMove(e) {
-  const pos = getPointerPos(e);
-  const wrapperRect = pageWrapper.getBoundingClientRect();
+// ─── Drag / Resize ───
+document.addEventListener('mousemove', pointerMove);
+document.addEventListener('mouseup', pointerUp);
+document.addEventListener('touchmove', pointerMove, {passive:false});
+document.addEventListener('touchend', pointerUp);
 
+function gp(e) { return e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
+function pointerMove(e) {
+  const p = gp(e), wr = pageWrapper.getBoundingClientRect();
   if (app.dragState) {
-    e.preventDefault();
-    const { sig, offsetX, offsetY } = app.dragState;
-    let newX = pos.x - wrapperRect.left - offsetX;
-    let newY = pos.y - wrapperRect.top - offsetY;
-    newX = Math.max(0, Math.min(newX, wrapperRect.width - sig.width));
-    newY = Math.max(0, Math.min(newY, wrapperRect.height - sig.height));
-    sig.x = newX;
-    sig.y = newY;
-    renderSignatureBoxes();
+    e.preventDefault(); const {anno,ox,oy}=app.dragState;
+    anno.x = Math.max(0, Math.min(p.x-wr.left-ox, wr.width-anno.width));
+    anno.y = Math.max(0, Math.min(p.y-wr.top-oy, wr.height-anno.height));
+    renderAnnoBoxes();
   }
-
   if (app.resizeState) {
-    e.preventDefault();
-    const { sig, startX, startY, startW, startH } = app.resizeState;
-    const dx = pos.x - startX;
-    const dy = pos.y - startY;
-    const aspectRatio = startW / startH;
-    let newW = Math.max(40, startW + dx);
-    let newH = newW / aspectRatio;
-    if (newH < 20) { newH = 20; newW = newH * aspectRatio; }
-    sig.width = newW;
-    sig.height = newH;
-    renderSignatureBoxes();
-  }
-}
-
-function handlePointerUp() {
-  app.dragState = null;
-  app.resizeState = null;
-}
-
-function selectSignature(id) {
-  app.selectedSignature = app.signatures.find(s => s.id === id) || null;
-  document.getElementById('btn-delete-selected').disabled = !app.selectedSignature;
-  renderSignatureBoxes();
-}
-
-function removeSignature(id) {
-  app.signatures = app.signatures.filter(s => s.id !== id);
-  if (app.selectedSignature && app.selectedSignature.id === id) {
-    app.selectedSignature = null;
-    document.getElementById('btn-delete-selected').disabled = true;
-  }
-  renderSignatureBoxes();
-  showToast('Signature removed');
-}
-
-// Deselect on canvas click
-pageWrapper.addEventListener('mousedown', e => {
-  if (e.target === pdfCanvas) {
-    app.selectedSignature = null;
-    document.getElementById('btn-delete-selected').disabled = true;
-    renderSignatureBoxes();
-  }
-});
-
-// Page navigation
-document.getElementById('btn-prev-page').addEventListener('click', () => {
-  if (app.currentPage > 1) { app.currentPage--; pageInput.value = app.currentPage; renderPage(); }
-});
-document.getElementById('btn-next-page').addEventListener('click', () => {
-  if (app.currentPage < app.totalPages) { app.currentPage++; pageInput.value = app.currentPage; renderPage(); }
-});
-pageInput.addEventListener('change', () => {
-  let p = parseInt(pageInput.value);
-  if (isNaN(p) || p < 1) p = 1;
-  if (p > app.totalPages) p = app.totalPages;
-  app.currentPage = p;
-  pageInput.value = p;
-  renderPage();
-});
-
-// Zoom
-document.getElementById('btn-zoom-in').addEventListener('click', () => {
-  app.scale = Math.min(3, app.scale + 0.25);
-  zoomLevel.textContent = Math.round(app.scale / 1.5 * 100) + '%';
-  renderPage();
-});
-document.getElementById('btn-zoom-out').addEventListener('click', () => {
-  app.scale = Math.max(0.5, app.scale - 0.25);
-  zoomLevel.textContent = Math.round(app.scale / 1.5 * 100) + '%';
-  renderPage();
-});
-
-// Delete selected
-document.getElementById('btn-delete-selected').addEventListener('click', () => {
-  if (app.selectedSignature) removeSignature(app.selectedSignature.id);
-});
-
-// Add signature (draw/type)
-document.getElementById('btn-add-signature').addEventListener('click', openSignaturePad);
-
-function openSignaturePad() {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay';
-  overlay.id = 'sig-modal';
-  overlay.innerHTML = `
-    <div class="modal" style="max-width:500px;">
-      <h3>Create Signature</h3>
-      <div class="sig-pad-container">
-        <div class="sig-options">
-          <button class="active" id="sig-tab-draw" onclick="switchSigTab('draw')">Draw</button>
-          <button id="sig-tab-type" onclick="switchSigTab('type')">Type</button>
-        </div>
-        <div id="sig-draw-panel">
-          <div class="sig-options">
-            <button class="color-btn active" data-color="#000000" style="background:#000" onclick="setSigColor(this,'#000000')"></button>
-            <button class="color-btn" data-color="#0f3460" style="background:#0f3460" onclick="setSigColor(this,'#0f3460')"></button>
-            <button class="color-btn" data-color="#e94560" style="background:#e94560" onclick="setSigColor(this,'#e94560')"></button>
-            <button style="margin-left:auto" onclick="clearSigPad()">Clear</button>
-          </div>
-          <canvas id="sig-canvas" width="460" height="160"></canvas>
-        </div>
-        <div id="sig-type-panel" style="display:none">
-          <input type="text" class="sig-type-input" id="sig-type-input" placeholder="Type your name" oninput="updateTypePreview()">
-          <div class="sig-font-options" id="sig-font-options">
-            <button class="active" data-font="'Brush Script MT', cursive" onclick="setSigFont(this)">Brush Script</button>
-            <button data-font="'Segoe Script', cursive" onclick="setSigFont(this)">Segoe Script</button>
-            <button data-font="'Comic Sans MS', cursive" onclick="setSigFont(this)">Comic Sans</button>
-            <button data-font="Georgia, serif" onclick="setSigFont(this)">Georgia</button>
-          </div>
-          <div class="sig-type-preview" id="sig-type-preview">
-            <span style="font-size:1.8rem;font-family:'Brush Script MT',cursive;color:#000">Your signature</span>
-          </div>
-        </div>
-      </div>
-      <div class="modal-actions" style="margin-top:1rem">
-        <button onclick="closeSigModal()">Cancel</button>
-        <button class="primary" onclick="addDrawnSignature()">Add Signature</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
-  initSigPad();
-}
-
-let sigPadCtx, sigPadDrawing = false, sigColor = '#000000', sigFont = "'Brush Script MT', cursive";
-
-function initSigPad() {
-  const canvas = document.getElementById('sig-canvas');
-  sigPadCtx = canvas.getContext('2d');
-  sigPadCtx.lineWidth = 2.5;
-  sigPadCtx.lineCap = 'round';
-  sigPadCtx.lineJoin = 'round';
-  sigPadCtx.strokeStyle = sigColor;
-
-  canvas.addEventListener('mousedown', e => { sigPadDrawing = true; sigPadCtx.beginPath(); sigPadCtx.moveTo(e.offsetX, e.offsetY); });
-  canvas.addEventListener('mousemove', e => { if (sigPadDrawing) { sigPadCtx.lineTo(e.offsetX, e.offsetY); sigPadCtx.stroke(); } });
-  canvas.addEventListener('mouseup', () => sigPadDrawing = false);
-  canvas.addEventListener('mouseleave', () => sigPadDrawing = false);
-
-  canvas.addEventListener('touchstart', e => {
-    e.preventDefault();
-    sigPadDrawing = true;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const t = e.touches[0];
-    sigPadCtx.beginPath();
-    sigPadCtx.moveTo((t.clientX - rect.left) * scaleX, (t.clientY - rect.top) * scaleY);
-  }, { passive: false });
-  canvas.addEventListener('touchmove', e => {
-    e.preventDefault();
-    if (!sigPadDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    const t = e.touches[0];
-    sigPadCtx.lineTo((t.clientX - rect.left) * scaleX, (t.clientY - rect.top) * scaleY);
-    sigPadCtx.stroke();
-  }, { passive: false });
-  canvas.addEventListener('touchend', () => sigPadDrawing = false);
-}
-
-window.switchSigTab = function(tab) {
-  document.getElementById('sig-tab-draw').classList.toggle('active', tab === 'draw');
-  document.getElementById('sig-tab-type').classList.toggle('active', tab === 'type');
-  document.getElementById('sig-draw-panel').style.display = tab === 'draw' ? 'block' : 'none';
-  document.getElementById('sig-type-panel').style.display = tab === 'type' ? 'block' : 'none';
-};
-
-window.setSigColor = function(btn, color) {
-  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  sigColor = color;
-  if (sigPadCtx) sigPadCtx.strokeStyle = color;
-};
-
-window.clearSigPad = function() {
-  if (sigPadCtx) {
-    const canvas = document.getElementById('sig-canvas');
-    sigPadCtx.clearRect(0, 0, canvas.width, canvas.height);
-  }
-};
-
-window.setSigFont = function(btn) {
-  document.querySelectorAll('.sig-font-options button').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  sigFont = btn.dataset.font;
-  updateTypePreview();
-};
-
-window.updateTypePreview = function() {
-  const text = document.getElementById('sig-type-input').value || 'Your signature';
-  document.getElementById('sig-type-preview').innerHTML =
-    `<span style="font-size:1.8rem;font-family:${sigFont};color:${sigColor}">${text}</span>`;
-};
-
-window.closeSigModal = function() {
-  const m = document.getElementById('sig-modal');
-  if (m) m.remove();
-};
-
-window.addDrawnSignature = function() {
-  const drawPanel = document.getElementById('sig-draw-panel');
-  let dataUrl;
-
-  if (drawPanel.style.display !== 'none') {
-    const canvas = document.getElementById('sig-canvas');
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let minX = canvas.width, minY = canvas.height, maxX = 0, maxY = 0;
-    let hasContent = false;
-    for (let y = 0; y < canvas.height; y++) {
-      for (let x = 0; x < canvas.width; x++) {
-        if (imageData.data[(y * canvas.width + x) * 4 + 3] > 10) {
-          hasContent = true;
-          minX = Math.min(minX, x); minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
-        }
-      }
+    e.preventDefault(); const {anno,sx,sy,sw,sh}=app.resizeState;
+    const nw = Math.max(30, sw + p.x-sx);
+    if (anno.type==='text' || anno.type==='highlight' || anno.type==='whiteout') {
+      anno.width = nw; anno.height = Math.max(15, sh + p.y-sy);
+    } else {
+      const ar = sw/sh; anno.width = nw; anno.height = nw/ar;
     }
-    if (!hasContent) { showToast('Please draw a signature first'); return; }
-    const pad = 10;
-    minX = Math.max(0, minX - pad); minY = Math.max(0, minY - pad);
-    maxX = Math.min(canvas.width, maxX + pad); maxY = Math.min(canvas.height, maxY + pad);
-    const trimmed = document.createElement('canvas');
-    trimmed.width = maxX - minX;
-    trimmed.height = maxY - minY;
-    trimmed.getContext('2d').drawImage(canvas, minX, minY, trimmed.width, trimmed.height, 0, 0, trimmed.width, trimmed.height);
-    dataUrl = trimmed.toDataURL('image/png');
-  } else {
-    const text = document.getElementById('sig-type-input').value;
-    if (!text.trim()) { showToast('Please type a signature'); return; }
-    const tmpCanvas = document.createElement('canvas');
-    const tmpCtx = tmpCanvas.getContext('2d');
-    tmpCtx.font = `36px ${sigFont}`;
-    const metrics = tmpCtx.measureText(text);
-    tmpCanvas.width = Math.ceil(metrics.width) + 20;
-    tmpCanvas.height = 60;
-    tmpCtx.font = `36px ${sigFont}`;
-    tmpCtx.fillStyle = sigColor;
-    tmpCtx.textBaseline = 'middle';
-    tmpCtx.fillText(text, 10, 30);
-    dataUrl = tmpCanvas.toDataURL('image/png');
+    renderAnnoBoxes();
   }
+}
+function pointerUp() { app.dragState=null; app.resizeState=null; }
 
-  const img = new Image();
-  img.onload = () => {
-    const maxW = 200;
-    const ratio = Math.min(maxW / img.width, 1);
-    addSignatureToPage(dataUrl, img.width * ratio, img.height * ratio);
-    closeSigModal();
-    showToast('Signature added — drag to position, resize from corner');
-  };
-  img.src = dataUrl;
-};
-
-// Add image signature
-document.getElementById('btn-add-image').addEventListener('click', () => imageInput.click());
-imageInput.addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const img = new Image();
-    img.onload = () => {
-      const maxW = 200;
-      const ratio = Math.min(maxW / img.width, 1);
-      addSignatureToPage(ev.target.result, img.width * ratio, img.height * ratio);
-      showToast('Image signature added');
-    };
-    img.src = ev.target.result;
-  };
-  reader.readAsDataURL(file);
-  imageInput.value = '';
-});
-
-function addSignatureToPage(dataUrl, width, height) {
-  const sig = {
-    id: Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-    page: app.currentPage,
-    x: 50,
-    y: 50,
-    width,
-    height,
-    dataUrl,
-  };
-  app.signatures.push(sig);
-  selectSignature(sig.id);
+function selectAnno(id) {
+  app.selected = app.annotations.find(a=>a.id===id)||null;
+  $('btn-delete').disabled = !app.selected;
+  renderAnnoBoxes();
+}
+function removeAnno(id) {
+  app.annotations = app.annotations.filter(a=>a.id!==id);
+  if(app.selected?.id===id) { app.selected=null; $('btn-delete').disabled=true; }
+  renderAnnoBoxes();
 }
 
-// Download signed PDF
-document.getElementById('btn-download').addEventListener('click', downloadSignedPdf);
+// Click canvas to deselect
+pageWrapper.addEventListener('mousedown', e => {
+  if(e.target===pdfCanvas && app.activeTool!=='draw' && app.activeTool!=='highlight' && app.activeTool!=='whiteout') {
+    app.selected=null; $('btn-delete').disabled=true; renderAnnoBoxes();
+  }
+});
+
+// ─── Tools ───
+function setActiveTool(tool) {
+  app.activeTool = tool;
+  ['btn-text','btn-draw','btn-highlight','btn-whiteout','btn-shape'].forEach(id => $(id).classList.toggle('active', tool===id.replace('btn-','')));
+  annoCanvas.classList.toggle('drawing', tool==='draw');
+
+  // sub-toolbar
+  const sub = $('sub-toolbar');
+  ['opt-text','opt-draw','opt-highlight','opt-shape'].forEach(id => $(id).style.display='none');
+  if (tool==='text') { $('opt-text').style.display='contents'; sub.classList.add('visible'); }
+  else if (tool==='draw') { $('opt-draw').style.display='contents'; sub.classList.add('visible'); }
+  else if (tool==='highlight') { $('opt-highlight').style.display='contents'; sub.classList.add('visible'); }
+  else if (tool==='shape') { $('opt-shape').style.display='contents'; sub.classList.add('visible'); }
+  else sub.classList.remove('visible');
+}
+
+$('btn-text').addEventListener('click', () => setActiveTool(app.activeTool==='text'?null:'text'));
+$('btn-draw').addEventListener('click', () => setActiveTool(app.activeTool==='draw'?null:'draw'));
+$('btn-highlight').addEventListener('click', () => setActiveTool(app.activeTool==='highlight'?null:'highlight'));
+$('btn-whiteout').addEventListener('click', () => setActiveTool(app.activeTool==='whiteout'?null:'whiteout'));
+$('btn-shape').addEventListener('click', () => setActiveTool(app.activeTool==='shape'?null:'shape'));
+
+// Click on canvas to place text / highlight / whiteout / shape
+pdfCanvas.addEventListener('click', e => {
+  const r = pdfCanvas.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  if (app.activeTool === 'text') {
+    addAnno({ type:'text', x, y, width: 200, height: 30, text:'Type here',
+      fontSize: +$('opt-text-size').value, color: $('opt-text-color').value,
+      fontFamily: $('opt-text-font').value, bold: $('opt-text-bold').checked });
+  } else if (app.activeTool === 'highlight') {
+    const c = $('opt-hl-color').value, op = +$('opt-hl-opacity').value/100;
+    const rgba = hexToRgba(c, op);
+    addAnno({ type:'highlight', x, y, width:200, height:25, color: rgba });
+  } else if (app.activeTool === 'whiteout') {
+    addAnno({ type:'whiteout', x, y, width:150, height:20 });
+  } else if (app.activeTool === 'shape') {
+    addAnno({ type:'shape', x, y, width:120, height: $('opt-shape-type').value==='line'||$('opt-shape-type').value==='arrow'?60:100,
+      shape: $('opt-shape-type').value, strokeColor: $('opt-shape-stroke').value,
+      strokeWidth: +$('opt-shape-sw').value, fillColor: $('opt-shape-fill').value,
+      noFill: $('opt-shape-nofill').checked });
+  }
+});
+
+function hexToRgba(hex, a) {
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function addAnno(props) {
+  const a = { id: Date.now()+'_'+Math.random().toString(36).slice(2,6), page: app.currentPage, ...props };
+  app.annotations.push(a);
+  selectAnno(a.id);
+}
+
+// ─── Freehand Drawing ───
+let isEraser = false;
+$('opt-draw-eraser').addEventListener('click', function() { isEraser=!isEraser; this.classList.toggle('active', isEraser); });
+$('opt-draw-width').addEventListener('input', function() { $('opt-draw-width-val').textContent=this.value; });
+$('opt-hl-opacity').addEventListener('input', function() { $('opt-hl-opacity-val').textContent=this.value; });
+$('opt-shape-sw').addEventListener('input', function() { $('opt-shape-sw-val').textContent=this.value; });
+
+annoCanvas.addEventListener('mousedown', drawStart);
+annoCanvas.addEventListener('mousemove', drawMove);
+annoCanvas.addEventListener('mouseup', drawEnd);
+annoCanvas.addEventListener('mouseleave', drawEnd);
+annoCanvas.addEventListener('touchstart', e => { e.preventDefault(); drawStart(e); }, {passive:false});
+annoCanvas.addEventListener('touchmove', e => { e.preventDefault(); drawMove(e); }, {passive:false});
+annoCanvas.addEventListener('touchend', drawEnd);
+
+function drawPos(e) {
+  const r = annoCanvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  return { x: (t.clientX-r.left)*(annoCanvas.width/r.width), y: (t.clientY-r.top)*(annoCanvas.height/r.height) };
+}
+function drawStart(e) {
+  if (app.activeTool!=='draw') return;
+  const p = drawPos(e);
+  app.currentDrawPath = { points:[p], color: $('opt-draw-color').value, width: +$('opt-draw-width').value, eraser: isEraser };
+  if (!app.drawPaths[app.currentPage]) app.drawPaths[app.currentPage]=[];
+  app.drawPaths[app.currentPage].push(app.currentDrawPath);
+}
+function drawMove(e) {
+  if (!app.currentDrawPath) return;
+  app.currentDrawPath.points.push(drawPos(e));
+  redrawAnnotationCanvas();
+}
+function drawEnd() { app.currentDrawPath=null; }
+
+// ─── Page nav ───
+$('btn-prev').addEventListener('click', () => { if(app.currentPage>1){app.currentPage--;$('page-input').value=app.currentPage;renderPage();} });
+$('btn-next').addEventListener('click', () => { if(app.currentPage<app.totalPages){app.currentPage++;$('page-input').value=app.currentPage;renderPage();} });
+$('page-input').addEventListener('change', function() { let p=+this.value; p=Math.max(1,Math.min(p,app.totalPages)); app.currentPage=p; this.value=p; renderPage(); });
+
+// ─── Zoom ───
+$('btn-zin').addEventListener('click', () => { app.scale=Math.min(3,app.scale+0.25); $('zoom-level').textContent=Math.round(app.scale/1.5*100)+'%'; renderPage(); });
+$('btn-zout').addEventListener('click', () => { app.scale=Math.max(0.5,app.scale-0.25); $('zoom-level').textContent=Math.round(app.scale/1.5*100)+'%'; renderPage(); });
+
+// ─── Undo / Delete ───
+$('btn-undo').addEventListener('click', () => {
+  const pageAnnos = app.annotations.filter(a=>a.page===app.currentPage);
+  const pagePaths = app.drawPaths[app.currentPage]||[];
+  if (pageAnnos.length === 0 && pagePaths.length === 0) return;
+  const lastAnno = pageAnnos[pageAnnos.length-1];
+  const lastPath = pagePaths[pagePaths.length-1];
+  if (!lastAnno && lastPath) { pagePaths.pop(); app.drawPaths[app.currentPage]=pagePaths; redrawAnnotationCanvas(); return; }
+  if (!lastPath && lastAnno) { removeAnno(lastAnno.id); return; }
+  removeAnno(lastAnno.id);
+});
+$('btn-delete').addEventListener('click', () => { if(app.selected) removeAnno(app.selected.id); });
+
+// ─── Keyboard ───
+document.addEventListener('keydown', e => {
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.contentEditable==='true') return;
+  if((e.key==='Delete'||e.key==='Backspace') && app.selected) removeAnno(app.selected.id);
+  if(e.key==='Escape') { setActiveTool(null); app.selected=null; $('btn-delete').disabled=true; renderAnnoBoxes(); }
+  if(e.ctrlKey && e.key==='z') $('btn-undo').click();
+});
+
+// ─── Signature Modal ───
+$('btn-sign').addEventListener('click', openSigPad);
+let sigPadCtx, sigPadDrawing=false, sigColor='#000', sigFont="'Brush Script MT',cursive";
+
+function openSigPad() {
+  const ov = document.createElement('div'); ov.className='modal-overlay'; ov.id='sig-modal';
+  ov.innerHTML=`<div class="modal" style="max-width:500px"><h3>Create Signature</h3><div class="sig-pad-container"><div class="sig-options"><button class="active" id="sig-tab-draw" onclick="switchSigTab('draw')">Draw</button><button id="sig-tab-type" onclick="switchSigTab('type')">Type</button></div><div id="sig-draw-panel"><div class="sig-options"><button class="color-btn active" style="background:#000" onclick="setSigColor(this,'#000')"></button><button class="color-btn" style="background:#0f3460" onclick="setSigColor(this,'#0f3460')"></button><button class="color-btn" style="background:#e94560" onclick="setSigColor(this,'#e94560')"></button><button style="margin-left:auto" onclick="clearSigPad()">Clear</button></div><canvas id="sig-canvas" width="460" height="160"></canvas></div><div id="sig-type-panel" style="display:none"><input type="text" class="sig-type-input" id="sig-type-input" placeholder="Type your name" oninput="updateTypePreview()"><div class="sig-font-options" id="sig-font-options"><button class="active" data-font="'Brush Script MT',cursive" onclick="setSigFont(this)">Brush Script</button><button data-font="'Segoe Script',cursive" onclick="setSigFont(this)">Segoe Script</button><button data-font="'Comic Sans MS',cursive" onclick="setSigFont(this)">Comic Sans</button><button data-font="Georgia,serif" onclick="setSigFont(this)">Georgia</button></div><div class="sig-type-preview" id="sig-type-preview"><span style="font-size:1.8rem;font-family:'Brush Script MT',cursive">Your signature</span></div></div></div><div class="modal-actions" style="margin-top:1rem"><button onclick="$('sig-modal').remove()">Cancel</button><button class="primary" onclick="addDrawnSig()">Add</button></div></div>`;
+  document.body.appendChild(ov);
+  const c=$('sig-canvas'); sigPadCtx=c.getContext('2d'); sigPadCtx.lineWidth=2.5; sigPadCtx.lineCap='round'; sigPadCtx.lineJoin='round'; sigPadCtx.strokeStyle=sigColor;
+  c.addEventListener('mousedown', e=>{sigPadDrawing=true;sigPadCtx.beginPath();sigPadCtx.moveTo(e.offsetX,e.offsetY);});
+  c.addEventListener('mousemove', e=>{if(sigPadDrawing){sigPadCtx.lineTo(e.offsetX,e.offsetY);sigPadCtx.stroke();}});
+  c.addEventListener('mouseup', ()=>sigPadDrawing=false);
+  c.addEventListener('mouseleave', ()=>sigPadDrawing=false);
+  c.addEventListener('touchstart', e=>{e.preventDefault();sigPadDrawing=true;const r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.height/r.height,t=e.touches[0];sigPadCtx.beginPath();sigPadCtx.moveTo((t.clientX-r.left)*sx,(t.clientY-r.top)*sy);},{passive:false});
+  c.addEventListener('touchmove', e=>{e.preventDefault();if(!sigPadDrawing)return;const r=c.getBoundingClientRect(),sx=c.width/r.width,sy=c.height/r.height,t=e.touches[0];sigPadCtx.lineTo((t.clientX-r.left)*sx,(t.clientY-r.top)*sy);sigPadCtx.stroke();},{passive:false});
+  c.addEventListener('touchend', ()=>sigPadDrawing=false);
+}
+window.switchSigTab = t => { $('sig-tab-draw').classList.toggle('active',t==='draw'); $('sig-tab-type').classList.toggle('active',t==='type'); $('sig-draw-panel').style.display=t==='draw'?'block':'none'; $('sig-type-panel').style.display=t==='type'?'block':'none'; };
+window.setSigColor = (btn,c) => { document.querySelectorAll('.sig-pad-container .color-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); sigColor=c; if(sigPadCtx)sigPadCtx.strokeStyle=c; };
+window.clearSigPad = () => { if(sigPadCtx){const c=$('sig-canvas');sigPadCtx.clearRect(0,0,c.width,c.height);} };
+window.setSigFont = btn => { document.querySelectorAll('.sig-font-options button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); sigFont=btn.dataset.font; updateTypePreview(); };
+window.updateTypePreview = () => { const t=$('sig-type-input').value||'Your signature'; $('sig-type-preview').innerHTML=`<span style="font-size:1.8rem;font-family:${sigFont};color:${sigColor}">${t}</span>`; };
+
+window.addDrawnSig = function() {
+  const dp=$('sig-draw-panel'); let dataUrl;
+  if(dp.style.display!=='none') {
+    const c=$('sig-canvas'),ctx=c.getContext('2d'),id=ctx.getImageData(0,0,c.width,c.height);
+    let mnX=c.width,mnY=c.height,mxX=0,mxY=0,has=false;
+    for(let y=0;y<c.height;y++) for(let x=0;x<c.width;x++) if(id.data[(y*c.width+x)*4+3]>10){has=true;mnX=Math.min(mnX,x);mnY=Math.min(mnY,y);mxX=Math.max(mxX,x);mxY=Math.max(mxY,y);}
+    if(!has){showToast('Draw a signature first');return;}
+    const pd=10; mnX=Math.max(0,mnX-pd);mnY=Math.max(0,mnY-pd);mxX=Math.min(c.width,mxX+pd);mxY=Math.min(c.height,mxY+pd);
+    const tr=document.createElement('canvas');tr.width=mxX-mnX;tr.height=mxY-mnY;
+    tr.getContext('2d').drawImage(c,mnX,mnY,tr.width,tr.height,0,0,tr.width,tr.height);
+    dataUrl=tr.toDataURL('image/png');
+  } else {
+    const t=$('sig-type-input').value; if(!t.trim()){showToast('Type a signature');return;}
+    const tc=document.createElement('canvas'),tx=tc.getContext('2d');tx.font=`36px ${sigFont}`;
+    const m=tx.measureText(t);tc.width=Math.ceil(m.width)+20;tc.height=60;
+    tx.font=`36px ${sigFont}`;tx.fillStyle=sigColor;tx.textBaseline='middle';tx.fillText(t,10,30);
+    dataUrl=tc.toDataURL('image/png');
+  }
+  const img=new Image();
+  img.onload=()=>{const r=Math.min(200/img.width,1); addAnno({type:'signature',x:50,y:50,width:img.width*r,height:img.height*r,dataUrl}); $('sig-modal').remove(); showToast('Signature added');};
+  img.src=dataUrl;
+};
+
+// ─── Image stamp ───
+$('btn-stamp').addEventListener('click', () => $('image-input').click());
+$('image-input').addEventListener('change', e => {
+  const f=e.target.files[0]; if(!f)return;
+  const rd=new FileReader();
+  rd.onload=ev=>{const img=new Image();img.onload=()=>{const r=Math.min(200/img.width,1);addAnno({type:'image',x:50,y:50,width:img.width*r,height:img.height*r,dataUrl:ev.target.result});showToast('Image added');};img.src=ev.target.result;};
+  rd.readAsDataURL(f); $('image-input').value='';
+});
+
+// ─── Download ───
+$('btn-download').addEventListener('click', downloadPdf);
 
 async function renderPageToCanvas(pageNum, dpi) {
   const page = await app.pdfDoc.getPage(pageNum);
-  const viewport = page.getViewport({ scale: dpi / 72 });
-  const canvas = document.createElement('canvas');
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  const ctx = canvas.getContext('2d');
-  await page.render({ canvasContext: ctx, viewport }).promise;
-  return { canvas, viewport };
+  const vp = page.getViewport({scale:dpi/72});
+  const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  return {canvas:c,viewport:vp};
 }
 
-async function downloadSignedPdf() {
-  if (app.signatures.length === 0) {
-    showToast('No signatures added yet');
-    return;
-  }
+async function downloadPdf() {
+  const hasAnnos = app.annotations.length > 0 || Object.values(app.drawPaths).some(p=>p.length>0);
+  if(!hasAnnos){showToast('No edits to save');return;}
   showLoading();
   try {
-    let pdfDoc;
-    let isEncrypted = false;
-    const renderDpi = 200;
+    let pdfDoc, isEncrypted=false;
+    try { pdfDoc = await PDFDocument.load(app.pdfBytes, { password: app.pdfPassword||undefined }); }
+    catch(e) { isEncrypted=true; }
 
-    // Try loading directly first; fall back to re-rendering for encrypted PDFs
-    try {
-      pdfDoc = await PDFDocument.load(app.pdfBytes, {
-        password: app.pdfPassword || undefined,
-      });
-    } catch (encErr) {
-      isEncrypted = true;
-    }
-
-    if (isEncrypted) {
-      // Encrypted PDF: render each page as an image into a new PDF
+    if(isEncrypted) {
       pdfDoc = await PDFDocument.create();
-
-      for (let i = 1; i <= app.totalPages; i++) {
-        const { canvas: pageCanvas, viewport } = await renderPageToCanvas(i, renderDpi);
-        const pageImgBytes = await new Promise(resolve => {
-          pageCanvas.toBlob(blob => blob.arrayBuffer().then(buf => resolve(new Uint8Array(buf))), 'image/png');
-        });
-        const pageImg = await pdfDoc.embedPng(pageImgBytes);
-
-        const origPage = await app.pdfDoc.getPage(i);
-        const origViewport = origPage.getViewport({ scale: 1 });
-        const page = pdfDoc.addPage([origViewport.width, origViewport.height]);
-        page.drawImage(pageImg, {
-          x: 0, y: 0,
-          width: origViewport.width,
-          height: origViewport.height,
-        });
+      for(let i=1;i<=app.totalPages;i++){
+        const {canvas:pc} = await renderPageToCanvas(i,200);
+        const ib=await new Promise(r=>pc.toBlob(b=>b.arrayBuffer().then(buf=>r(new Uint8Array(buf))),'image/png'));
+        const pi=await pdfDoc.embedPng(ib);
+        const op=await app.pdfDoc.getPage(i), ov=op.getViewport({scale:1});
+        const pg=pdfDoc.addPage([ov.width,ov.height]);
+        pg.drawImage(pi,{x:0,y:0,width:ov.width,height:ov.height});
       }
     }
 
     const pages = pdfDoc.getPages();
+    const cW=pdfCanvas.width, cH=pdfCanvas.height;
 
-    for (const sig of app.signatures) {
-      const pageIndex = sig.page - 1;
-      if (pageIndex < 0 || pageIndex >= pages.length) continue;
-      const page = pages[pageIndex];
-      const { width: pageW, height: pageH } = page.getSize();
-
-      const canvasW = pdfCanvas.width;
-      const canvasH = pdfCanvas.height;
-
-      const scaleX = pageW / canvasW;
-      const scaleY = pageH / canvasH;
-
-      const pdfX = sig.x * scaleX;
-      const pdfY = pageH - (sig.y + sig.height) * scaleY;
-      const pdfW = sig.width * scaleX;
-      const pdfH = sig.height * scaleY;
-
-      const response = await fetch(sig.dataUrl);
-      const imgBytes = new Uint8Array(await response.arrayBuffer());
-
-      let embeddedImg;
-      if (sig.dataUrl.includes('image/png')) {
-        embeddedImg = await pdfDoc.embedPng(imgBytes);
-      } else {
-        embeddedImg = await pdfDoc.embedJpg(imgBytes);
+    // Embed freehand drawings as images
+    for(let pn=1; pn<=app.totalPages; pn++) {
+      const paths = app.drawPaths[pn]; if(!paths||paths.length===0) continue;
+      const pg=pages[pn-1]; const {width:pgW,height:pgH}=pg.getSize();
+      // Render draw paths onto a temp canvas at current scale
+      const tc=document.createElement('canvas'); tc.width=cW; tc.height=cH;
+      const tctx=tc.getContext('2d');
+      for(const p of paths){
+        if(p.points.length<2) continue;
+        tctx.beginPath(); tctx.moveTo(p.points[0].x,p.points[0].y);
+        for(let i=1;i<p.points.length;i++) tctx.lineTo(p.points[i].x,p.points[i].y);
+        tctx.strokeStyle=p.eraser?'rgba(255,255,255,1)':p.color;
+        tctx.lineWidth=p.width*(p.eraser?3:1); tctx.lineCap='round'; tctx.lineJoin='round'; tctx.stroke();
       }
-
-      page.drawImage(embeddedImg, {
-        x: pdfX,
-        y: pdfY,
-        width: pdfW,
-        height: pdfH,
-      });
+      const dib=await new Promise(r=>tc.toBlob(b=>b.arrayBuffer().then(buf=>r(new Uint8Array(buf))),'image/png'));
+      const di=await pdfDoc.embedPng(dib);
+      pg.drawImage(di,{x:0,y:0,width:pgW,height:pgH});
     }
 
-    const signedBytes = await pdfDoc.save();
-    const blob = new Blob([signedBytes], { type: 'application/pdf' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = app.fileName.replace(/\.pdf$/i, '') + '_signed.pdf';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    hideLoading();
-    showToast('Signed PDF downloaded!');
-  } catch (err) {
-    hideLoading();
-    console.error(err);
-    showToast('Error creating PDF: ' + err.message);
-  }
-}
+    // Embed annotations
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const timesFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    const timesBold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
+    const courierFont = await pdfDoc.embedFont(StandardFonts.Courier);
+    const courierBold = await pdfDoc.embedFont(StandardFonts.CourierBold);
 
-// Keyboard shortcuts
-document.addEventListener('keydown', e => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-  if ((e.key === 'Delete' || e.key === 'Backspace') && app.selectedSignature) {
-    removeSignature(app.selectedSignature.id);
-  }
-});
+    function pickFont(family, bold) {
+      const f = family.toLowerCase();
+      if(f.includes('times')||f.includes('georgia')) return bold?timesBold:timesFont;
+      if(f.includes('courier')) return bold?courierBold:courierFont;
+      return bold?helveticaBold:helveticaFont;
+    }
+    function hexRgb(hex) {
+      const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+      return rgb(r,g,b);
+    }
+
+    for(const a of app.annotations) {
+      const pi=a.page-1; if(pi<0||pi>=pages.length) continue;
+      const pg=pages[pi]; const {width:pgW,height:pgH}=pg.getSize();
+      const sx=pgW/cW, sy=pgH/cH;
+
+      if(a.type==='signature'||a.type==='image') {
+        const resp=await fetch(a.dataUrl);
+        const ib=new Uint8Array(await resp.arrayBuffer());
+        const ei = a.dataUrl.includes('image/png') ? await pdfDoc.embedPng(ib) : await pdfDoc.embedJpg(ib);
+        pg.drawImage(ei,{x:a.x*sx, y:pgH-(a.y+a.height)*sy, width:a.width*sx, height:a.height*sy});
+      } else if(a.type==='text') {
+        const font=pickFont(a.fontFamily,a.bold);
+        const fs=a.fontSize*sy*0.75;
+        pg.drawText(a.text||'',{x:a.x*sx, y:pgH-(a.y+fs*1.2)*sy, size:fs, font, color:hexRgb(a.color)});
+      } else if(a.type==='highlight') {
+        const m=a.color.match(/[\d.]+/g);
+        if(m) pg.drawRectangle({x:a.x*sx, y:pgH-(a.y+a.height)*sy, width:a.width*sx, height:a.height*sy,
+          color:rgb(+m[0]/255,+m[1]/255,+m[2]/255), opacity:+m[3]||0.4});
+      } else if(a.type==='whiteout') {
+        pg.drawRectangle({x:a.x*sx, y:pgH-(a.y+a.height)*sy, width:a.width*sx, height:a.height*sy, color:rgb(1,1,1)});
+      } else if(a.type==='shape') {
+        const px=a.x*sx, py=pgH-(a.y+a.height)*sy, pw=a.width*sx, ph=a.height*sy;
+        const sc=hexRgb(a.strokeColor||'#e94560'), sw=a.strokeWidth||2;
+        const fc=a.noFill?undefined:hexRgb(a.fillColor||'#ffffff');
+        if(a.shape==='rect') pg.drawRectangle({x:px,y:py,width:pw,height:ph, borderColor:sc, borderWidth:sw, color:fc, opacity:fc?1:0});
+        else if(a.shape==='circle') pg.drawEllipse({x:px+pw/2,y:py+ph/2, xScale:pw/2, yScale:ph/2, borderColor:sc, borderWidth:sw, color:fc, opacity:fc?1:0});
+        else if(a.shape==='line'||a.shape==='arrow') pg.drawLine({start:{x:px,y:py},end:{x:px+pw,y:py+ph},thickness:sw,color:sc});
+      }
+    }
+
+    const out = await pdfDoc.save();
+    const blob = new Blob([out],{type:'application/pdf'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href=url;
+    link.download = app.fileName.replace(/\.pdf$/i,'')+'_edited.pdf';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    hideLoading(); showToast('PDF downloaded!');
+  } catch(err) { hideLoading(); console.error(err); showToast('Error: '+err.message); }
+}
 </script>
 </body>
 </html>
